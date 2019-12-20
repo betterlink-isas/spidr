@@ -1,0 +1,5 @@
+{
+    "username": "user",
+    "mcusername": "xXTestUser420Xx",
+    "hash": "totally real SHA256 password hash obtained from `dpsh.lua -p`"
+}

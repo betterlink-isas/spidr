@@ -1,0 +1,11 @@
+{
+    "domain": "zone.com",
+    "authority": "user",
+    "zones": [
+        {
+            "type": "A",
+            "host": "@",
+            "address": "totally real network card address"
+        }
+    ]
+}
