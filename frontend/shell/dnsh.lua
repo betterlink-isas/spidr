@@ -239,6 +239,27 @@ while true do
     end
   elseif command == "exit" then
     break
+  elseif command == "help" then
+    if #args == 1 then
+      print("Commands: auth, deauth, token, exit, help")
+    else
+      local comm = args[2]
+      if comm == "auth" then
+        print("auth: authenticates you")
+      elseif comm == "deauth" then
+        print("deauth: deauthenticates you but does not exist")
+      elseif comm == "token" then
+        print("token: prints your current authentication token")
+      elseif comm == "exit" then
+        print("exit: deauths and exists (same effect as ^D and ^C)")
+      elseif comm == "help" then
+        print("help [command]: shows help messages for commands, lists commands with no arguments")
+      else
+        print("help: invalid command")
+      end
+    end
+  else
+    print("dnsh: command '" .. command .. "' is not valid")
   end
 end
 if token ~= "noauth" then
