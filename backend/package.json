@@ -1,0 +1,23 @@
+{
+  "name": "dns-proto-backend",
+  "version": "1.0.0",
+  "description": "A DNS-protocol thingy for OC",
+  "main": "backend.js",
+  "dependencies": {
+    "uuid": "^3.3.3",
+    "yargs": "^15.0.2"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "opencomputers"
+  ],
+  "author": "TeamIsotope",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/teamisotope/dns-proto-dev.git"
+  }
+}
