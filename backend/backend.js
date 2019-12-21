@@ -2,6 +2,7 @@
 const net = require("net");
 const fs = require("fs");
 const auth = require("./auth");
+const domain = require("./domain");
 const common = require("./common");
 const returnObject = common.returnObject;
 const returnResponse = common.returnResponse;
@@ -41,6 +42,10 @@ var server = new net.createServer(function(socket) {
                 auth.change(socket, json);
             } else if (json.type >= 3 && json.type <= 15) {
                 auth.nonexistant(socket, json);
+            } else if (json.type == 16) {
+                domain.list(socket, json);
+            } else if (json.type >= 17 && json.type <= 31) {
+                domain.nonexistant(socket, json);
             } else if (json.type == null) {
                 returnObject(socket, {"type": 254, "status": 252, "detail": "Type not present"});
             }

@@ -268,6 +268,53 @@ function change(newPass)
   end
 end
 
+function domains()
+  socket:write(json.encode({["type"]=16,["token"]=token}))
+  local data = json.decode(socket:read())
+  if data.type == 30 then
+    if data.status == 255 then
+      if data.detail then
+        print("Error 255: " .. data.detail)
+      else
+        print("Error 255: unknown")
+      end
+    elseif data.status == 239 then
+      print("Bad token. Please try to deauth then auth again.")
+    elseif data.status == 20 then
+      print("Error 20: Malformed userfile")
+    elseif data.status == 19 then
+      print("Error 19: Nonexistant user")
+    end
+  elseif data.type == 31 then
+    if data.status == 16 then
+      if data.extra.domains then
+        print("Domains:")
+        for _,v in ipairs(data.extra.domains) do
+          print(v)
+        end
+      else
+        print("Error: good response but no list")
+      end
+    else
+      print("Error: good response but bad status")
+    end
+  elseif data.type == 254 then
+    if data.status == 253 then
+        if data.detail then
+          print("Invalid request JSON: " .. data.detail)
+        else
+          print("Invalid request JSON (unknown)")
+        end
+    elseif data.status == 252 then
+      print("Error 252: Type not present")
+    else
+      print("General unknown error")
+    end
+  else
+    print("Invalid response from server")
+  end
+end
+
 function passwdAsk()
   if token ~= "noauth" then
     term.write("New password: ")
@@ -330,9 +377,15 @@ while true do
     end
   elseif command == "passwd" then
     passwdAsk()
+  elseif command == "domains" then
+    if token ~= "noauth" then
+      domains()
+    else
+      print("You are not authorized!")
+    end
   elseif command == "help" then
     if #args == 1 then
-      print("Commands: auth, deauth, token, exit, help, gethash, passwd")
+      print("Commands: auth, deauth, token, exit, help, gethash, passwd, domains")
     else
       local comm = args[2]
       if comm == "auth" then
@@ -349,6 +402,8 @@ while true do
         print("gethash: gets the SHA256 hash for a password")
       elseif comm == "passwd" then
         print("passwd: changes your password (will prompt for new password)")
+      elseif comm == "domains" then
+        print("domains: lists what domains you have authority over")
       else
         print("help: invalid command")
       end
