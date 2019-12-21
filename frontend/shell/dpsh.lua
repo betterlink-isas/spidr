@@ -6,7 +6,7 @@ local shell = require("shell")
 
 local incard = component.internet
 local internet = require("internet")
-local data = component.data
+local datacard = component.data
 print("DNS Proto Shell (v1.0.0+git)")
 local args,ops = shell.parse(...)
 if #args == 0 then
@@ -38,7 +38,7 @@ function strtohex(str)
   end
   return hex
 end
-local hash = strtohex(data.sha256(pass))
+local hash = strtohex(datacard.sha256(pass))
 term.write("\n")
 
 local authRequest = {
@@ -109,9 +109,9 @@ while true do
     local data = json.decode(socket:read("*l"))
     if data.type == "DOMAIN RESPONSE" then
       if data.status == "BAD USERFILE" then
-        print("Bad user file, please contact administrator")
+        error("Bad user file, please contact administrator")
       elseif data.status == "BAD TOKEN" then
-        print("Bad token, please reauth and try again (close and reopen dpsh)")
+        error("Bad token, please reauth and try again (close and reopen dpsh)")
       elseif data.status == "GOOD LIST" then
         if data.list then
           for _,v in ipairs(data.list) do
@@ -132,15 +132,63 @@ while true do
     else
       error("Invalid response from server")
     end
+  elseif command == "passwd" or command == "changepass" then
+    io.write("New password: ")
+    local np = term.read({pwchar = "*"})
+    if np == false or np == nil then 
+      term.write("^C")
+      term.write("\n")
+    else
+      np = np:sub(0, #np-1)
+      local hash = strtohex(datacard.sha256(np))
+      term.write("\n")
+      io.write("Confirm new password: ")
+      local cnp = term.read({pwchar = "*"})
+      if cnp == false or cnp == nil then
+        term.write("^C")
+        term.write("\n")
+      else
+        cnp = cnp:sub(0, #cnp-1)
+        local chash = strtohex(datacard.sha256(cnp))
+        term.write("\n")
+        if chash ~= hash then
+          print("Passwords do not match! Please try again.")
+        else
+          socket:write(json.encode({["type"]="AUTH CHANGE",["newpassword"]=chash,["token"]=token}))
+          local data = json.decode(socket:read("*l"))
+          if data.type == "AUTH RESPONSE" then
+            if data.status == "GOOD CHANGE" then
+              print("Successfully changed password!")
+            elseif data.status == "BAD TOKEN" then
+              error("Bad token, please reauth and try again (close and reopen dpsh)")
+            elseif data.status == "BAD USERFILE" then
+              error("Bad user file, please contact administrator")
+            else
+              error("Invalid response from server")
+            end
+          elseif data.type == "ERROR" then
+            if data.error then
+              error(data.error)
+            else
+              error("Invalid response from server")
+            end
+          else
+            error("Invalid response from server")
+          end
+        end
+      end
+    end
   elseif command == "help" then
     if #args == 1 then
-      print("Commands: help, ls|list, exit|logout")
+      print("Commands: help, ls|list, exit|logout passwd|changepass")
     else
       comm = args[2]
       if comm == "list" or comm == "ls" then
         print("ls|list: lists all domains you have authority over")
       elseif comm == "exit" or comm == "logout" then
         print("exit|logout: deauths and closes the console. Same effect with ^D and ^C")
+      elseif comm == "passwd" or comm == "changepass" then
+        print("passwd|changepass: changes your password (will prompt for new password)")
       else
         print("Invalid command!")
       end

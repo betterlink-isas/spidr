@@ -1,6 +1,6 @@
 {
     "username": "user",
-    "mcusername": "xXTestUser420Xx",
+    "mcuuid": "totally real MC user UUID",
     "hash": "totally real SHA256 password hash obtained from `dpsh.lua -p` or other means",
     "domains": [
         "zone.com"

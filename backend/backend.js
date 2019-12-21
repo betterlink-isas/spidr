@@ -64,8 +64,51 @@ var server = new net.createServer(function(socket) {
                 } else {
                     console.log("DEAUTH " + tokens[token]);
                     tokens[token] = null;
+                    returnObject(socket, {"type": "AUTH RESPONSE", "status": "GOOD DEAUTH"});
                 }
-                returnObject(socket, {"type": "AUTH RESPONSE", "status": "GOOD DEAUTH"})
+            } else if (json.type == "AUTH CHANGE") { 
+                var token = json.token;
+                var newpass = json.newpassword;
+                if (token == null) {
+                    returnObject(socket, {"type": "ERROR", "error": "Malformed request (token not present)"});
+                } else if (newpass == null) {
+                    returnObject(socket, {"type": "ERROR", "error": "Malformed request (new password not present)"});
+                } else if (!(/^([a-f0-9]{64})$/.test(newpass))) {
+                    returnObject(socket, {"type": "ERROR", "error": "Malformed request (new password is not a SHA256 hash)"});
+                } else {
+                    if (fs.existsSync('authorities/' + tokens[token] + '.json')) {
+                        var data = fs.readFileSync('authorities/' + tokens[token] + '.json');
+                        try {
+                            var user = JSON.parse(data);
+                            if (user.hash == null) {
+                                returnObject(socket, {
+                                    "type": "AUTH RESPONSE",
+                                    "status": "BAD USERFILE"
+                                });
+                            } else {
+                                user.hash = newpass;
+                                var strjson = JSON.stringify(user);
+                                fs.writeFileSync('authorities/' + tokens[token] + '.json', strjson);
+                                returnObject(socket, {
+                                    "type": "AUTH RESPONSE",
+                                    "status": "GOOD CHANGE"
+                                });
+                                console.log("CHANGEPASS " + tokens[token]);
+                            }
+                        } catch (err) {
+                            console.log(err);
+                            returnObject(socket, {
+                                "type": "AUTH RESPONSE",
+                                "status": "BAD USERFILE"
+                            });
+                        }
+                    } else {
+                        returnObject(socket, {
+                            "type": "AUTH RESPONSE",
+                            "status": "BAD TOKEN"
+                        });
+                    }
+                }
             } else if (json.type == "DOMAIN LIST") {
                 var token = json.token;
                 if (token == null) {
