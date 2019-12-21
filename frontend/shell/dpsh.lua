@@ -9,8 +9,12 @@ local internet = require("internet")
 local data = component.data
 print("DNS Proto Shell (v1.0.0+git)")
 local args,ops = shell.parse(...)
+if #args == 0 then
+  print("Usage: dpsh <server ip> [-h|--help] [-p|--printHash]")
+  os.exit(0)
+end
 if ops.h or ops.help then
-  print("Usage: dpsh [-h|--help] [-p|--printHash]")
+  print("Usage: dpsh <server ip> [-h|--help] [-p|--printHash]")
   os.exit(0)
 end
 term.write("Username: ")
@@ -47,7 +51,7 @@ if ops.p or ops.printHash then
   print("Hash: " .. hash)
   os.exit(0)
 end
-local socket = internet.open("68.102.163.235", 8053)
+local socket = internet.open(args[1], 8053)
 if (socket) then
 else
   error("Could not connect to server")
