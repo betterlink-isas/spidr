@@ -56,6 +56,14 @@ elseif args.config then
   else
     error("Config file does not exist!")
   end
+else
+  error("You must use either the config flag or the bind argument")
+end
+
+if address == "" then
+  error("You must set a bind address!")
+elseif port == 0 or port == nil then
+  error("You must set a bind port!")
 end
 
 local socket = internet.open(address, port)
@@ -197,13 +205,13 @@ function authAsk()
     io.write("Username: ")
     local user = term.read()
     if user == false or user == nil then
-      term.write("^C\n")
+      term.write("\n")
     else
       user = user:sub(0, #user-1)
       term.write("Password: ")
       local pass = term.read({pwchar="*"})
       if pass == false or user == nil then
-        term.write("^C\n")
+        term.write("\n")
       else
         pass = pass:sub(0, #pass-1)
         hash = strtohex(datacard.sha256(pass))
@@ -213,6 +221,78 @@ function authAsk()
     end
   else
     print("You are already authenticated!")
+  end
+end
+
+function change(newPass)
+  socket:write(json.encode({["type"]=2,["token"]=token,["newPassword"]=newPass}))
+  local data = json.decode(socket:read())
+  if data.type == 14 then
+    if data.status == 255 then
+      if data.detail then
+        print("Error 255: " .. data.detail)
+      else
+        print("Error 255: unknown")
+      end
+    elseif data.status == 6 then
+      print("Error 6: Malformed password hash")
+    elseif data.status == 239 then
+      print("Bad token. Please try to deauth then auth again.")
+    elseif data.status == 4 then
+      print("Error 4: Malformed userfile")
+    elseif data.status == 7 then
+      print("Error 7: Could not write to userfile")
+    elseif data.status == 3 then
+      print("Error 3: Nonexistant user")
+    end
+  elseif data.type == 15 then
+    if data.status == 2 then
+      print("Successfully changed password.")
+    else
+      print("Error: good response but bad status")
+    end
+  elseif data.type == 254 then
+    if data.status == 253 then
+        if data.detail then
+          print("Invalid request JSON: " .. data.detail)
+        else
+          print("Invalid request JSON (unknown)")
+        end
+    elseif data.status == 252 then
+      print("Error 252: Type not present")
+    else
+      print("General unknown error")
+    end
+  else
+    print("Invalid response from server")
+  end
+end
+
+function passwdAsk()
+  if token ~= "noauth" then
+    term.write("New password: ")
+    local pass = term.read({pwchar="*"})
+    if pass == nil or pass == false then
+      term.write("\n")
+    else
+      pass = pass:sub(0, #pass-1)
+      term.write("\nConfirm new password: ")
+      local confirm = term.read({pwchar="*"})
+      if confirm == nil or confirm == false then
+        term.write("\n")
+      else
+        term.write("\n")
+        confirm = confirm:sub(0, #confirm-1)
+        if confirm == pass then
+          hash = strtohex(datacard.sha256(confirm))
+          change(hash)
+        else
+          print("Passwords do not match! Please try again.")
+        end
+      end
+    end
+  else
+    print("You are not authenticated!")
   end
 end
 
@@ -239,9 +319,20 @@ while true do
     end
   elseif command == "exit" then
     break
+  elseif command == "gethash" then
+    term.write("Password: ")
+    local pass = term.read({pwchar="*"})
+    if pass == false or pass == nil then
+      term.write("\n")
+    else
+      pass = pass:sub(0, #pass-1)
+      print("\nHash: ", strtohex(datacard.sha256(pass)))
+    end
+  elseif command == "passwd" then
+    passwdAsk()
   elseif command == "help" then
     if #args == 1 then
-      print("Commands: auth, deauth, token, exit, help")
+      print("Commands: auth, deauth, token, exit, help, gethash, passwd")
     else
       local comm = args[2]
       if comm == "auth" then
@@ -254,6 +345,10 @@ while true do
         print("exit: deauths and exists (same effect as ^D and ^C)")
       elseif comm == "help" then
         print("help [command]: shows help messages for commands, lists commands with no arguments")
+      elseif comm == "gethash" then
+        print("gethash: gets the SHA256 hash for a password")
+      elseif comm == "passwd" then
+        print("passwd: changes your password (will prompt for new password)")
       else
         print("help: invalid command")
       end

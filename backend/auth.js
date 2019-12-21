@@ -30,10 +30,12 @@ function auth(socket, json) {
                     console.log("AUTH " + username);
                 } else {
                     returnResponse(socket, 14, 5, "Bad credentials");
+                    console.log("AUTH FAIL (B.C.) " + username);
                 }
             }
         } else if (userFile.error == "Nonexistant") {
             returnResponse(socket, 14, 3, "Nonexistant user");
+            console.log("AUTH FAIL (N.E.) " + username);
         } else {
             returnResponse(socket, 14, 4, "Malformed userfile");
             console.error(userFile.error);
@@ -75,11 +77,11 @@ function change(socket, json) {
                     user.hash = newPassword;
                     var strjson = JSON.stringify(user);
                     try {
-                        fs.writeFileSync('authorities/' + username + '.json');
-                        returnResponse(15, 2, "Good change");
+                        fs.writeFileSync('authorities/' + username + '.json', strjson);
+                        returnResponse(socket, 15, 2, "Good change");
                         console.log("CHANGE PASS " + username);
                     } catch (err) {
-                        returnResponse(15, 7, "Could not write to userfile");
+                        returnResponse(socket, 14, 7, "Could not write to userfile");
                     }
                 }
             } else if (userFile.error == "Nonexistant") {
