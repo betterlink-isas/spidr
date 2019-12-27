@@ -4,6 +4,7 @@ const fs = require("fs");
 const auth = require("./auth");
 const domain = require("./domain");
 const common = require("./common");
+const admin = require("./admin");
 const returnObject = common.returnObject;
 const returnResponse = common.returnResponse;
 const returnResponseExtra = common.returnResponseExtra;
@@ -46,6 +47,24 @@ var server = new net.createServer(function(socket) {
                 domain.list(socket, json);
             } else if (json.type >= 17 && json.type <= 31) {
                 domain.nonexistant(socket, json);
+            } else if (json.type == 32) {
+
+            } else if (json.type == 33) {
+
+            } else if (json.type == 34) {
+                admin.completeDeauth(socket, json);
+            } else if (json.type == 35) {
+                
+            } else if (json.type == 36) {
+
+            } else if (json.type == 37) {
+                
+            } else if (json.type == 38) {
+
+            } else if (json.type == 39) {
+
+            } else if (json.type >= 40 && json.type <= 47) {
+                admin.nonexistant(socket, json);
             } else if (json.type == null) {
                 returnObject(socket, {"type": 254, "status": 252, "detail": "Type not present"});
             }

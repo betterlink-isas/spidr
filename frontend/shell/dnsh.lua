@@ -244,6 +244,8 @@ function change(newPass)
       print("Error 7: Could not write to userfile")
     elseif data.status == 3 then
       print("Error 3: Nonexistant user")
+    else
+      print("Undefined error")
     end
   elseif data.type == 15 then
     if data.status == 2 then
@@ -280,10 +282,12 @@ function domains()
       end
     elseif data.status == 239 then
       print("Bad token. Please try to deauth then auth again.")
-    elseif data.status == 20 then
+    elseif data.status == 4 then
       print("Error 20: Malformed userfile")
-    elseif data.status == 19 then
+    elseif data.status == 3 then
       print("Error 19: Nonexistant user")
+    else
+      print("Undefined error")
     end
   elseif data.type == 31 then
     if data.status == 16 then
@@ -294,6 +298,54 @@ function domains()
         end
       else
         print("Error: good response but no list")
+      end
+    else
+      print("Error: good response but bad status")
+    end
+  elseif data.type == 254 then
+    if data.status == 253 then
+        if data.detail then
+          print("Invalid request JSON: " .. data.detail)
+        else
+          print("Invalid request JSON (unknown)")
+        end
+    elseif data.status == 252 then
+      print("Error 252: Type not present")
+    else
+      print("General unknown error")
+    end
+  else
+    print("Invalid response from server")
+  end
+end
+
+function adminDeauth(target)
+  socket:write(json.encode({["type"]=34,["token"]=token,["target"]=target}))
+  local data = json.decode(socket:read())
+  if data.type == 46 then
+    if data.status == 255 then
+      if data.detail then
+        print("Error 255: " .. data.detail)
+      else
+        print("Error 255: unknown")
+      end
+    elseif data.status == 239 then
+      print("Bad token. Please try to deauth then auth again.")
+    elseif data.status == 4 then
+      print("Error 20: Malformed userfile")
+    elseif data.status == 3 then
+      print("Error 19: Nonexistant user")
+    elseif data.status == 40 then
+      print("Error: you are not a registered administrator!")
+    else
+      print("Undefined error")
+    end
+  elseif data.type == 47 then
+    if data.status == 34 then
+      if data.extra.count then
+        print(string.format("Successfully deauthed %d tokens of user '%s'", data.extra.count, target))
+      else
+        print("Error: good response but no count")
       end
     else
       print("Error: good response but bad status")
@@ -383,9 +435,19 @@ while true do
     else
       print("You are not authorized!")
     end
+  elseif command == "admdeauth" then
+    if token ~= "noauth" then
+      if #args == 1 then
+        print("Usage: admdeauth [username of user]")
+      else
+        adminDeauth(args[2])
+      end
+    else
+      print("You are not authorized!")
+    end
   elseif command == "help" then
     if #args == 1 then
-      print("Commands: auth, deauth, token, exit, help, gethash, passwd, domains")
+      print("Commands: auth, deauth, token, exit, help, gethash, passwd, domains, admdeauth")
     else
       local comm = args[2]
       if comm == "auth" then
@@ -404,6 +466,8 @@ while true do
         print("passwd: changes your password (will prompt for new password)")
       elseif comm == "domains" then
         print("domains: lists what domains you have authority over")
+      elseif comm == "admdeauth" then
+        print("admdeauth [username]: deauths all logged in instances of a user (admin only)")
       else
         print("help: invalid command")
       end
